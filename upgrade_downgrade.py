@@ -82,12 +82,14 @@ def restart_aws_node(k8s_apps_v1, flag):
 
 def patch_aws_node(k8s_apps_v1, ver):
     print("Patching AWS node, this will restart IPAMD")
-    if ver == 1 :
-        patch = {"spec":{"template":{"spec":{"containers":[{"name": "aws-node", "image" : "940911992744.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.4-rc1"}]}}}}
-    elif ver == 2 :    
+    if ver == "1.6.4" :
+        patch = {"spec":{"template":{"spec":{"containers":[{"name": "aws-node", "image" : "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.4"}]}}}}
+    elif ver == "1.6.3" :    
         patch = {"spec":{"template":{"spec":{"containers":[{"name": "aws-node", "image" : "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.6.3"}]}}}}
-    else :
+    elif ver == "1.5.7" :
         patch = {"spec":{"template":{"spec":{"containers":[{"name": "aws-node", "image" : "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.5.7"}]}}}}
+    elif ver == "1.7.0" :
+        patch = {"spec":{"template":{"spec":{"containers":[{"name": "aws-node", "image" : "602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.7.0-rc2"}]}}}}
 
     k8s_apps_v1.patch_namespaced_daemon_set(name="aws-node",
             namespace="kube-system", body=patch)
@@ -148,39 +150,25 @@ def main():
         print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
     
     print("****RUN***")
-    print("AWS NODE - 1.6.4")
-    scale_up_replicas(k8s_apps_v1, 100)
-    scale_down_replicas(k8s_apps_v1, 50)
-    resting_time(10)
-    check_dup_ip(v1)
-    print("DOWNGRADE AWS NODE - 1.6.3")
-    patch_aws_node(k8s_apps_v1, 1)
-    watch_aws_node(v1)
-    scale_up_replicas(k8s_apps_v1, 100)
-    scale_down_replicas(k8s_apps_v1, 50)
-    resting_time(10)
-    check_dup_ip(v1)
-    print("DOWNGRADE AWS NODE - 1.5.7")
-    patch_aws_node(k8s_apps_v1, 3)
-    scale_up_replicas(k8s_apps_v1, 100)
-    scale_down_replicas(k8s_apps_v1, 50)
-    resting_time(10)
-    check_dup_ip(v1)
-    print("UPGRADE AWS NODE - 1.6.4")
-    patch_aws_node(k8s_apps_v1, 1)
-    watch_aws_node(v1)
-    scale_up_replicas(k8s_apps_v1, 100)
-    scale_down_replicas(k8s_apps_v1, 50)
+    print("AWS NODE - 1.7")
+    scale_up_replicas(k8s_apps_v1, 6)
     resting_time(10)
     check_dup_ip(v1)
     
-    #scale_down_replicas(k8s_apps_v1, 2500)
-    #resting_time(15)
-    #check_dup_ip(v1)
-    #restart_aws_node(k8s_apps_v1, flag)
-    #resting_time(5)
-    #flag = operator.not_(flag)
-
+    print("DOWNGRADE AWS NODE - 1.6.4")
+    patch_aws_node(k8s_apps_v1, "1.6.4")
+    watch_aws_node(v1)
+    scale_up_replicas(k8s_apps_v1, 16)
+    resting_time(10)
+    check_dup_ip(v1)
+    
+    print("UPGRADE AWS NODE - 1.7")
+    patch_aws_node(k8s_apps_v1, "1.7.0")
+    watch_aws_node(v1)
+    scale_up_replicas(k8s_apps_v1, 25)
+    resting_time(10)
+    check_dup_ip(v1)
+    
     cleanup(k8s_apps_v1)
     
 if __name__ == '__main__':
