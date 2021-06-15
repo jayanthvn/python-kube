@@ -54,7 +54,7 @@ def main():
     config.load_kube_config()
     v1 = client.CoreV1Api()
 
-    with open("/local/home/varavaj/eks_workshop/run-my-nginx.yaml") as f:
+    with open("run-my-nginx.yaml") as f:
         dep = yaml.safe_load(f)
         k8s_apps_v1 = client.AppsV1Api()
         resp = k8s_apps_v1.create_namespaced_deployment(
@@ -72,13 +72,13 @@ def main():
     for x in range(10):    
         print("****RUN***",x)
         scale_up_replicas(k8s_apps_v1, 30)
-        resting_time(20)
+        resting_time(30)
         check_dup_ip(v1)
         scale_down_replicas(k8s_apps_v1, 1)
-        resting_time(20)
+        resting_time(30)
         check_dup_ip(v1)
         restart_aws_node(k8s_apps_v1, flag)
-        resting_time(5)
+        resting_time(30)
         flag = operator.not_(flag)
 
     restart_aws_node(k8s_apps_v1, flag)
